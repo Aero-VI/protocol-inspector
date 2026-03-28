@@ -271,3 +271,145 @@ td:first-child {
         width: 100%;
     }
 }
+/* Capture Tab Styles */
+.capture-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.control-row {
+    display: flex;
+    gap: 10px;
+}
+
+.capture-btn {
+    padding: 8px 16px;
+    border: 1px solid #3a3a3a;
+    background: #2a2a2a;
+    color: #e8e8e8;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.capture-btn:hover:not(:disabled) {
+    background: #3a3a3a;
+}
+
+.capture-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+#start-capture-btn { background: #1a4a1a; }
+#start-capture-btn:hover:not(:disabled) { background: #2a5a2a; }
+#stop-capture-btn { background: #4a1a1a; }
+#stop-capture-btn:hover:not(:disabled) { background: #5a2a2a; }
+
+.filter-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filter-row input {
+    flex: 1;
+}
+
+.filter-row select {
+    padding: 6px 12px;
+    background: #2a2a2a;
+    color: #e8e8e8;
+    border: 1px solid #3a3a3a;
+}
+
+.import-export {
+    display: flex;
+    gap: 10px;
+}
+
+.capture-stats {
+    display: flex;
+    gap: 30px;
+    padding: 10px;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    margin-bottom: 15px;
+    font-size: 14px;
+}
+
+.capture-stats strong {
+    color: #f39c12;
+}
+
+.view-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.view-btn {
+    padding: 6px 12px;
+    background: #2a2a2a;
+    color: #e8e8e8;
+    border: 1px solid #3a3a3a;
+    cursor: pointer;
+    font-size: 13px;
+}
+
+.view-btn.active {
+    background: #3a3a3a;
+    color: #f39c12;
+}
+
+.capture-display {
+    max-height: 500px;
+    overflow-y: auto;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+}
+
+#capture-table {
+    width: 100%;
+    font-size: 13px;
+    font-family: "Courier New", monospace;
+}
+
+#capture-table th {
+    background: #2a2a2a;
+    padding: 8px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    border-bottom: 1px solid #3a3a3a;
+}
+
+#capture-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+#capture-table tr:hover {
+    background: #252525;
+}
+
+.dir-client {
+    color: #4a90e2;
+}
+
+.dir-server {
+    color: #e24a4a;
+}
+
+.packet-data {
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+}

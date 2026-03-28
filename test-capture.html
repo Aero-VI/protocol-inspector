@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Capture Test</title>
+    <script src="modules/capture/packet-capture.js"></script>
+</head>
+<body>
+    <h1>Packet Capture Test</h1>
+    <script>
+        // Test packet capture
+        const capture = new PacketCapture();
+        capture.startCapture();
+        
+        // Add some test packets
+        const testPackets = [
+            { opcode: 164, direction: 'client', data: new Uint8Array([164, 0x81, 0x12, 0x34, 0x56]) },
+            { opcode: 4, direction: 'client', data: new Uint8Array([4, 0x80, 0x81, 5, 72, 101, 108, 108, 111]) },
+            { opcode: 73, direction: 'server', data: new Uint8Array([73, 0x00, 0x10, 0x20]) }
+        ];
+        
+        testPackets.forEach(pkt => capture.addPacket(pkt));
+        
+        // Test PCAP export
+        const pcapBlob = capture.exportPCAP();
+        console.log('PCAP export size:', pcapBlob.size, 'bytes');
+        
+        // Test packet views
+        testPackets.forEach(pkt => {
+            const views = capture.getPacketViews(pkt);
+            console.log('Packet views:', views);
+        });
+        
+        document.write('<p>✅ Packet capture module working! Check console for details.</p>');
+    </script>
+</body>
+</html>

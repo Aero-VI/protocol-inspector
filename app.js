@@ -390,8 +390,190 @@ window.onload = function() {
     displayRecentPackets();
     displayPacketStructures();
     
+    // Initialize packet capture
+    if (window.PacketCapture) {
+        packetCapture = new PacketCapture();
+    }
+    
     // Test with the example packet
     if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
         decodePacket();
     }
 };
+
+// Capture functions
+function startCapture() {
+    if (!packetCapture) {
+        packetCapture = new PacketCapture();
+    }
+    
+    packetCapture.startCapture();
+    document.getElementById('start-capture-btn').disabled = true;
+    document.getElementById('stop-capture-btn').disabled = false;
+    document.getElementById('capture-status').textContent = 'Capturing...';
+    
+    // Start duration timer
+    captureInterval = setInterval(updateCaptureDuration, 1000);
+    
+    // Simulate proxy if needed
+    if (!window.activeProxy) {
+        window.activeProxy = new PacketProxy('oldschool76.runescape.com', 43594);
+        window.activeProxy.start(43595);
+    }
+}
+
+function stopCapture() {
+    if (!packetCapture) return;
+    
+    packetCapture.stopCapture();
+    document.getElementById('start-capture-btn').disabled = false;
+    document.getElementById('stop-capture-btn').disabled = true;
+    document.getElementById('capture-status').textContent = 'Stopped';
+    
+    if (captureInterval) {
+        clearInterval(captureInterval);
+        captureInterval = null;
+    }
+}
+
+function clearCapture() {
+    if (!packetCapture) return;
+    
+    packetCapture.clear();
+    document.getElementById('capture-tbody').innerHTML = '';
+    document.getElementById('packet-count').textContent = '0';
+    document.getElementById('capture-duration').textContent = '00:00';
+}
+
+function updateCaptureDuration() {
+    if (!packetCapture || !packetCapture.captureStartTime) return;
+    
+    const duration = Date.now() - packetCapture.captureStartTime;
+    const seconds = Math.floor(duration / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const displaySeconds = seconds % 60;
+    
+    document.getElementById('capture-duration').textContent = 
+        `${minutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
+}
+
+function updateCaptureDisplay(packet) {
+    const tbody = document.getElementById('capture-tbody');
+    const row = document.createElement('tr');
+    
+    // Time column
+    const timeCell = document.createElement('td');
+    timeCell.textContent = new Date(packet.captureTime).toLocaleTimeString();
+    row.appendChild(timeCell);
+    
+    // Direction column
+    const dirCell = document.createElement('td');
+    dirCell.textContent = packet.direction === 'client' ? 'C→S' : 'S→C';
+    dirCell.className = packet.direction === 'client' ? 'dir-client' : 'dir-server';
+    row.appendChild(dirCell);
+    
+    // Opcode column
+    const opcodeCell = document.createElement('td');
+    opcodeCell.textContent = packet.opcode;
+    row.appendChild(opcodeCell);
+    
+    // Name column
+    const nameCell = document.createElement('td');
+    const definition = PACKET_DEFINITIONS[packet.opcode];
+    nameCell.textContent = definition ? definition.name : 'Unknown';
+    row.appendChild(nameCell);
+    
+    // Data column
+    const dataCell = document.createElement('td');
+    const views = packetCapture.getPacketViews(packet);
+    dataCell.textContent = views[captureView];
+    dataCell.className = 'packet-data';
+    row.appendChild(dataCell);
+    
+    tbody.insertBefore(row, tbody.firstChild);
+    
+    // Update packet count
+    document.getElementById('packet-count').textContent = packetCapture.packets.length;
+    
+    // Limit displayed rows
+    while (tbody.children.length > 100) {
+        tbody.removeChild(tbody.lastChild);
+    }
+}
+
+window.updateCaptureDisplay = updateCaptureDisplay;
+
+function setCaptureView(view) {
+    captureView = view;
+    
+    // Update button states
+    document.querySelectorAll('.view-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    // Refresh display
+    refreshCaptureDisplay();
+}
+
+function refreshCaptureDisplay() {
+    const tbody = document.getElementById('capture-tbody');
+    tbody.innerHTML = '';
+    
+    if (packetCapture && packetCapture.packets.length > 0) {
+        // Show last 100 packets
+        const packetsToShow = packetCapture.packets.slice(-100).reverse();
+        packetsToShow.forEach(packet => {
+            updateCaptureDisplay(packet);
+        });
+    }
+}
+
+function updateCaptureFilter() {
+    if (!packetCapture) return;
+    
+    // Get opcode filter
+    const opcodeFilter = document.getElementById('opcode-filter').value;
+    if (opcodeFilter) {
+        const opcodes = opcodeFilter.split(',').map(o => parseInt(o.trim())).filter(o => !isNaN(o));
+        packetCapture.setOpcodeFilter(opcodes);
+    } else {
+        packetCapture.setOpcodeFilter([]);
+    }
+    
+    // Get direction filter
+    const directionFilter = document.getElementById('direction-filter').value;
+    packetCapture.setDirectionFilter(directionFilter);
+}
+
+function exportCapture() {
+    if (!packetCapture || packetCapture.packets.length === 0) {
+        alert('No packets to export');
+        return;
+    }
+    
+    const blob = packetCapture.exportPCAP();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `rsps-capture-${new Date().toISOString().replace(/[:.]/g, '-')}.pcap`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importPCAP(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        if (!packetCapture) {
+            packetCapture = new PacketCapture();
+        }
+        
+        packetCapture.importPCAP(e.target.result);
+        refreshCaptureDisplay();
+        document.getElementById('packet-count').textContent = packetCapture.packets.length;
+    };
+    reader.readAsArrayBuffer(file);
+}
