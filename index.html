@@ -19,6 +19,7 @@
             <button class="tab-button" onclick="switchTab('differ')">Version Diff</button>
             <button class="tab-button" onclick="switchTab('encyclopedia')">Encyclopedia</button>
             <button class="tab-button" onclick="switchTab('fuzzer')">Fuzzer</button>
+            <button class="tab-button" onclick="switchTab('flow')">Flow Diagrams</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -359,6 +360,55 @@
             </div>
         </div>
 
+        <!-- Flow Diagram Tab -->
+        <div id="flow" class="tab-content">
+            <h2>Packet Flow Diagrams</h2>
+            
+            <div class="flow-selector">
+                <label>Select Flow:</label>
+                <select id="flow-select" onchange="renderSelectedFlow()">
+                    <option value="">Choose a flow...</option>
+                    <option value="login">Login Sequence</option>
+                    <option value="combat">Combat Sequence</option>
+                    <option value="trade">Trading Sequence</option>
+                    <option value="teleport">Teleport Sequence</option>
+                </select>
+                
+                <button onclick="showFlowBuilder()" class="secondary-btn">+ Create Custom Flow</button>
+            </div>
+            
+            <div class="flow-content">
+                <div id="flow-diagram"></div>
+                <div id="flow-detail-panel" class="flow-detail-panel">
+                    <div class="detail-placeholder">Click on a node for details</div>
+                </div>
+            </div>
+            
+            <!-- Flow Builder Modal -->
+            <div id="flow-builder-modal" class="modal" style="display: none;">
+                <div class="modal-content flow-builder">
+                    <h3>Custom Flow Builder</h3>
+                    <div class="builder-form">
+                        <input type="text" id="flow-name" placeholder="Flow Name">
+                        <textarea id="flow-description" placeholder="Description"></textarea>
+                        
+                        <h4>Nodes</h4>
+                        <div id="flow-nodes-list"></div>
+                        <button onclick="addFlowNode()">+ Add Node</button>
+                        
+                        <h4>Connections</h4>
+                        <div id="flow-edges-list"></div>
+                        <button onclick="addFlowEdge()">+ Add Connection</button>
+                        
+                        <div class="builder-actions">
+                            <button onclick="saveCustomFlow()" class="primary-btn">Save Flow</button>
+                            <button onclick="closeFlowBuilder()">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -380,12 +430,14 @@
         </div>
     </div>
     
+    <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="modules/capture/packet-capture.js"></script>
     <script src="modules/replay/packet-replay.js"></script>
     <script src="modules/differ/protocol-differ.js"></script>
     <script src="modules/encyclopedia/opcode-encyclopedia.js"></script>
     <script src="modules/visualizer/byte-visualizer.js"></script>
     <script src="modules/fuzzer/protocol-fuzzer.js"></script>
+    <script src="modules/flow/packet-flow.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

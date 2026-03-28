@@ -1572,3 +1572,169 @@ function exportFuzzResults() {
     a.click();
     URL.revokeObjectURL(url);
 }
+
+// Packet Flow Diagram Functions
+let packetFlow = null;
+let customNodes = [];
+let customEdges = [];
+
+// Initialize flow diagram on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.PacketFlowDiagram) {
+        packetFlow = new PacketFlowDiagram("flow-diagram");
+    }
+});
+
+function renderSelectedFlow() {
+    const flowName = document.getElementById("flow-select").value;
+    if (!flowName || !packetFlow) return;
+    
+    packetFlow.renderFlow(flowName);
+}
+
+function showFlowBuilder() {
+    document.getElementById("flow-builder-modal").style.display = "flex";
+    customNodes = [];
+    customEdges = [];
+    updateFlowBuilder();
+}
+
+function closeFlowBuilder() {
+    document.getElementById("flow-builder-modal").style.display = "none";
+}
+
+function addFlowNode() {
+    const nodeId = `node_${customNodes.length + 1}`;
+    const node = {
+        id: nodeId,
+        label: `Node ${customNodes.length + 1}`,
+        type: "process"
+    };
+    
+    customNodes.push(node);
+    updateFlowBuilder();
+}
+
+function addFlowEdge() {
+    if (customNodes.length < 2) {
+        alert("Add at least 2 nodes first");
+        return;
+    }
+    
+    const edge = {
+        source: customNodes[0].id,
+        target: customNodes[1].id
+    };
+    
+    customEdges.push(edge);
+    updateFlowBuilder();
+}
+
+function updateFlowBuilder() {
+    // Update nodes list
+    const nodesList = document.getElementById("flow-nodes-list");
+    nodesList.innerHTML = "";
+    
+    customNodes.forEach((node, index) => {
+        const div = document.createElement("div");
+        div.className = "builder-node";
+        div.innerHTML = `
+            <input type="text" value="${node.label}" onchange="updateNodeLabel(${index}, this.value)">
+            <select onchange="updateNodeType(${index}, this.value)">
+                <option value="start" ${node.type === "start" ? "selected" : ""}>Start</option>
+                <option value="process" ${node.type === "process" ? "selected" : ""}>Process</option>
+                <option value="client" ${node.type === "client" ? "selected" : ""}>Client</option>
+                <option value="server" ${node.type === "server" ? "selected" : ""}>Server</option>
+                <option value="decision" ${node.type === "decision" ? "selected" : ""}>Decision</option>
+                <option value="end" ${node.type === "end" ? "selected" : ""}>End</option>
+            </select>
+            <button onclick="removeNode(${index})">×</button>
+        `;
+        nodesList.appendChild(div);
+    });
+    
+    // Update edges list
+    const edgesList = document.getElementById("flow-edges-list");
+    edgesList.innerHTML = "";
+    
+    customEdges.forEach((edge, index) => {
+        const div = document.createElement("div");
+        div.className = "builder-edge";
+        div.innerHTML = `
+            <select onchange="updateEdgeSource(${index}, this.value)">
+                ${customNodes.map(n => 
+                    `<option value="${n.id}" ${edge.source === n.id ? "selected" : ""}>${n.label}</option>`
+                ).join("")}
+            </select>
+            →
+            <select onchange="updateEdgeTarget(${index}, this.value)">
+                ${customNodes.map(n => 
+                    `<option value="${n.id}" ${edge.target === n.id ? "selected" : ""}>${n.label}</option>`
+                ).join("")}
+            </select>
+            <button onclick="removeEdge(${index})">×</button>
+        `;
+        edgesList.appendChild(div);
+    });
+}
+
+function updateNodeLabel(index, label) {
+    customNodes[index].label = label;
+}
+
+function updateNodeType(index, type) {
+    customNodes[index].type = type;
+}
+
+function removeNode(index) {
+    const nodeId = customNodes[index].id;
+    customNodes.splice(index, 1);
+    
+    // Remove edges connected to this node
+    customEdges = customEdges.filter(e => e.source !== nodeId && e.target !== nodeId);
+    
+    updateFlowBuilder();
+}
+
+function updateEdgeSource(index, source) {
+    customEdges[index].source = source;
+}
+
+function updateEdgeTarget(index, target) {
+    customEdges[index].target = target;
+}
+
+function removeEdge(index) {
+    customEdges.splice(index, 1);
+    updateFlowBuilder();
+}
+
+function saveCustomFlow() {
+    const name = document.getElementById("flow-name").value;
+    const description = document.getElementById("flow-description").value;
+    
+    if (!name) {
+        alert("Please enter a flow name");
+        return;
+    }
+    
+    if (customNodes.length === 0) {
+        alert("Add at least one node");
+        return;
+    }
+    
+    // Add custom flow to flow diagram
+    packetFlow.addCustomFlow(name, description, customNodes, customEdges);
+    
+    // Add to select dropdown
+    const select = document.getElementById("flow-select");
+    const option = document.createElement("option");
+    option.value = name;
+    option.textContent = name + " (Custom)";
+    select.appendChild(option);
+    
+    // Close modal and render new flow
+    closeFlowBuilder();
+    select.value = name;
+    renderSelectedFlow();
+}
