@@ -1738,3 +1738,178 @@ function saveCustomFlow() {
     select.value = name;
     renderSelectedFlow();
 }
+
+// Bot Generator Functions
+let botGenerator = null;
+let generatedScript = "";
+
+// Initialize bot generator on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.BotScriptGenerator) {
+        botGenerator = new BotScriptGenerator();
+    }
+    
+    // Handle source radio buttons
+    document.querySelectorAll("input[name=\"bot-source\"]").forEach(radio => {
+        radio.addEventListener("change", (e) => {
+            document.getElementById("manual-packets").style.display = 
+                e.target.value === "manual" ? "block" : "none";
+        });
+    });
+});
+
+function generateBotScript() {
+    if (!botGenerator) return;
+    
+    const source = document.querySelector("input[name=\"bot-source\"]:checked").value;
+    const language = document.getElementById("bot-language").value;
+    
+    const options = {
+        includeLogin: document.getElementById("bot-include-login").checked,
+        includeLoop: document.getElementById("bot-include-loop").checked,
+        includeComments: document.getElementById("bot-include-comments").checked,
+        rateLimit: parseInt(document.getElementById("bot-rate-limit").value)
+    };
+    
+    let packets = [];
+    
+    if (source === "capture") {
+        // Get packets from capture
+        if (!packetCapture || !packetCapture.packets || packetCapture.packets.length === 0) {
+            alert("No captured packets available. Capture some packets first.");
+            return;
+        }
+        packets = packetCapture.packets;
+    } else {
+        // Parse manual input
+        const input = document.getElementById("bot-packets-input").value;
+        packets = parseManualPackets(input);
+        
+        if (packets.length === 0) {
+            alert("No valid packets found in manual input");
+            return;
+        }
+    }
+    
+    try {
+        if (source === "capture") {
+            generatedScript = botGenerator.generateFromCapture(packets, language, options);
+        } else {
+            generatedScript = botGenerator.generateScript(packets, language, options);
+        }
+        
+        displayBotScript(generatedScript, language);
+    } catch (error) {
+        alert("Error generating script: " + error.message);
+    }
+}
+
+function parseManualPackets(input) {
+    const lines = input.trim().split("\\n");
+    const packets = [];
+    
+    lines.forEach(line => {
+        const cleanLine = line.trim();
+        if (cleanLine) {
+            const hex = cleanLine.replace(/[^0-9a-fA-F]/g, "");
+            if (hex.length >= 2) {
+                const data = [];
+                for (let i = 0; i < hex.length; i += 2) {
+                    data.push(parseInt(hex.substr(i, 2), 16));
+                }
+                packets.push({ data: new Uint8Array(data) });
+            }
+        }
+    });
+    
+    return packets;
+}
+
+function displayBotScript(script, language) {
+    const output = document.getElementById("bot-script-output");
+    
+    // Add syntax highlighting class based on language
+    output.className = `language-${language}`;
+    output.textContent = script;
+    
+    // Enable action buttons
+    document.getElementById("copy-bot-btn").disabled = false;
+    document.getElementById("download-bot-btn").disabled = false;
+    
+    // Try to apply syntax highlighting if Prism.js is available
+    if (window.Prism) {
+        Prism.highlightElement(output);
+    }
+}
+
+function copyBotScript() {
+    if (!generatedScript) return;
+    
+    navigator.clipboard.writeText(generatedScript).then(() => {
+        const btn = document.getElementById("copy-bot-btn");
+        const originalText = btn.textContent;
+        btn.textContent = "✅ Copied!";
+        setTimeout(() => {
+            btn.textContent = originalText;
+        }, 2000);
+    });
+}
+
+function downloadBotScript() {
+    if (!generatedScript || !botGenerator) return;
+    
+    const language = document.getElementById("bot-language").value;
+    botGenerator.exportScript(generatedScript, language);
+}
+
+function loadBotTemplate(template) {
+    const templates = {
+        autofighter: {
+            packets: [
+                "83 00 64", // NPC Option 1 (Attack)
+                "A4 81 12 34 56", // Walk
+                "83 00 65", // Attack another NPC
+            ],
+            description: "Basic auto fighter that attacks NPCs"
+        },
+        woodcutter: {
+            packets: [
+                "A4 81 20 30 40", // Walk to tree
+                "98 00 0A", // Object Option 1 (Chop)
+                "A4 81 25 35 45", // Walk to bank
+                "75 00 01 00 1C", // Item Drop (logs)
+            ],
+            description: "Woodcutting bot that chops and banks"
+        },
+        walker: {
+            packets: [
+                "A4 81 10 20 30", // Walk waypoint 1
+                "A4 81 15 25 35", // Walk waypoint 2
+                "A4 81 20 30 40", // Walk waypoint 3
+                "62 80 81 82", // Walk on command
+            ],
+            description: "Path walking bot"
+        },
+        trader: {
+            packets: [
+                "8B 00 01", // Trade request
+                "91 00 01 00 63 00 05", // Add item to trade
+                "4C", // Accept trade
+            ],
+            description: "Automated trading bot"
+        }
+    };
+    
+    const tmpl = templates[template];
+    if (!tmpl) return;
+    
+    // Switch to manual mode
+    document.querySelector("input[name=\"bot-source\"][value=\"manual\"]").checked = true;
+    document.getElementById("manual-packets").style.display = "block";
+    
+    // Load template packets
+    document.getElementById("bot-packets-input").value = tmpl.packets.join("\\n");
+    
+    // Show description
+    alert(`Template loaded: ${tmpl.description}`);
+}

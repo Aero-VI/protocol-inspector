@@ -20,6 +20,7 @@
             <button class="tab-button" onclick="switchTab('encyclopedia')">Encyclopedia</button>
             <button class="tab-button" onclick="switchTab('fuzzer')">Fuzzer</button>
             <button class="tab-button" onclick="switchTab('flow')">Flow Diagrams</button>
+            <button class="tab-button" onclick="switchTab('botgen')">Bot Generator</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -409,6 +410,107 @@
             </div>
         </div>
 
+        <!-- Bot Generator Tab -->
+        <div id="botgen" class="tab-content">
+            <h2>Bot Script Generator</h2>
+            
+            <div class="botgen-controls">
+                <div class="input-section">
+                    <h3>Input Source</h3>
+                    <div class="source-options">
+                        <label>
+                            <input type="radio" name="bot-source" value="capture" checked>
+                            From Capture
+                        </label>
+                        <label>
+                            <input type="radio" name="bot-source" value="manual">
+                            Manual Packets
+                        </label>
+                    </div>
+                    
+                    <div id="manual-packets" style="display: none;">
+                        <textarea id="bot-packets-input" placeholder="Enter hex packets, one per line&#10;Example: A4 81 12 34 56"></textarea>
+                    </div>
+                </div>
+                
+                <div class="config-section">
+                    <h3>Configuration</h3>
+                    <div class="config-grid">
+                        <div class="config-item">
+                            <label>Language:</label>
+                            <select id="bot-language">
+                                <option value="java">Java</option>
+                                <option value="kotlin">Kotlin</option>
+                                <option value="python">Python</option>
+                            </select>
+                        </div>
+                        
+                        <div class="config-item">
+                            <label>Rate Limit (ms):</label>
+                            <input type="number" id="bot-rate-limit" value="100" min="0">
+                        </div>
+                        
+                        <div class="config-item">
+                            <label>
+                                <input type="checkbox" id="bot-include-login" checked>
+                                Include Login Sequence
+                            </label>
+                        </div>
+                        
+                        <div class="config-item">
+                            <label>
+                                <input type="checkbox" id="bot-include-loop" checked>
+                                Include Main Loop
+                            </label>
+                        </div>
+                        
+                        <div class="config-item">
+                            <label>
+                                <input type="checkbox" id="bot-include-comments" checked>
+                                Include Comments
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button onclick="generateBotScript()" class="primary-btn">Generate Script</button>
+                </div>
+            </div>
+            
+            <div class="botgen-output">
+                <div class="output-header">
+                    <h3>Generated Script</h3>
+                    <div class="output-actions">
+                        <button onclick="copyBotScript()" id="copy-bot-btn">📋 Copy</button>
+                        <button onclick="downloadBotScript()" id="download-bot-btn">💾 Download</button>
+                    </div>
+                </div>
+                
+                <pre id="bot-script-output"><code>// Generated script will appear here</code></pre>
+            </div>
+            
+            <div class="bot-templates">
+                <h3>Quick Templates</h3>
+                <div class="template-grid">
+                    <div class="template-item" onclick="loadBotTemplate('autofighter')">
+                        <h4>⚔️ Auto Fighter</h4>
+                        <p>Basic combat bot template</p>
+                    </div>
+                    <div class="template-item" onclick="loadBotTemplate('woodcutter')">
+                        <h4>🪓 Woodcutter</h4>
+                        <p>Resource gathering bot</p>
+                    </div>
+                    <div class="template-item" onclick="loadBotTemplate('walker')">
+                        <h4>🚶 Path Walker</h4>
+                        <p>Movement and navigation</p>
+                    </div>
+                    <div class="template-item" onclick="loadBotTemplate('trader')">
+                        <h4>💰 Auto Trader</h4>
+                        <p>Trading automation</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -438,6 +540,7 @@
     <script src="modules/visualizer/byte-visualizer.js"></script>
     <script src="modules/fuzzer/protocol-fuzzer.js"></script>
     <script src="modules/flow/packet-flow.js"></script>
+    <script src="modules/botgen/bot-generator.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
