@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RSPS Protocol Inspector</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>RSPS Protocol Inspector</h1>
+        <p class="subtitle">RuneScape 508 Protocol Packet Decoder/Encoder</p>
+        
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('decoder')">Decoder</button>
+            <button class="tab-button" onclick="switchTab('builder')">Builder</button>
+            <button class="tab-button" onclick="switchTab('reference')">Reference</button>
+        </div>
+
+        <!-- Decoder Tab -->
+        <div id="decoder" class="tab-content active">
+            <h2>Packet Decoder</h2>
+            <div class="input-group">
+                <label>Hex Packet (e.g., 31-05-18-0C-0C-13-00)</label>
+                <input type="text" id="hex-input" placeholder="31-05-18-0C-0C-13-00" value="31-05-18-0C-0C-13-00">
+                <button onclick="decodePacket()">Decode</button>
+            </div>
+            
+            <div id="decode-result" class="result-box"></div>
+            
+            <div class="recent-section">
+                <h3>Recent Packets</h3>
+                <div id="recent-packets"></div>
+            </div>
+        </div>
+
+        <!-- Builder Tab -->
+        <div id="builder" class="tab-content">
+            <h2>Packet Builder</h2>
+            <div class="input-group">
+                <label>Opcode</label>
+                <select id="opcode-select" onchange="updateBuilderFields()">
+                    <option value="">Select Opcode...</option>
+                    <option value="164">164 - Walk</option>
+                    <option value="98">98 - Walk on Command</option>
+                    <option value="248">248 - Mini Walk</option>
+                    <option value="4">4 - Public Chat</option>
+                    <option value="14">14 - Player Option 1</option>
+                    <option value="237">237 - Magic on Player</option>
+                    <option value="249">249 - Magic on NPC</option>
+                    <option value="131">131 - NPC Option 1</option>
+                    <option value="17">17 - NPC Option 2</option>
+                    <option value="122">122 - Item First Click</option>
+                    <option value="41">41 - Item Equip</option>
+                    <option value="117">117 - Item Drop</option>
+                    <option value="87">87 - Item on Item</option>
+                    <option value="192">192 - Button Click</option>
+                </select>
+            </div>
+            
+            <div id="builder-fields"></div>
+            
+            <div class="build-result">
+                <h3>Generated Packet</h3>
+                <div class="hex-preview" id="hex-preview">--</div>
+                <button onclick="copyHex()" id="copy-button">Copy</button>
+            </div>
+        </div>
+
+        <!-- Reference Tab -->
+        <div id="reference" class="tab-content">
+            <h2>Protocol Reference</h2>
+            
+            <div class="modifier-legend">
+                <h3>Byte Modifiers</h3>
+                <table>
+                    <tr><td><code>A</code></td><td>value - 128</td></tr>
+                    <tr><td><code>C</code></td><td>-value</td></tr>
+                    <tr><td><code>S</code></td><td>128 - value</td></tr>
+                    <tr><td><code>BigEndian</code></td><td>Multi-byte value (MSB first)</td></tr>
+                </table>
+            </div>
+            
+            <div class="packet-reference">
+                <h3>Common Packet Structures</h3>
+                <div id="packet-structures"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="app.js"></script>
+</body>
+</html>
