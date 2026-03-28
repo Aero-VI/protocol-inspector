@@ -1913,3 +1913,218 @@ function loadBotTemplate(template) {
     // Show description
     alert(`Template loaded: ${tmpl.description}`);
 }
+
+// Performance Profiler Functions
+let performanceProfiler = null;
+let profilingActive = false;
+let profileStartTime = null;
+let profileUpdateInterval = null;
+
+// Initialize profiler on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.PerformanceProfiler) {
+        performanceProfiler = new PerformanceProfiler();
+    }
+});
+
+function startProfiling() {
+    if (!performanceProfiler || !packetCapture) {
+        alert("Initialize packet capture first");
+        return;
+    }
+    
+    profilingActive = true;
+    profileStartTime = Date.now();
+    
+    document.getElementById("start-profile-btn").disabled = true;
+    document.getElementById("stop-profile-btn").disabled = false;
+    
+    // Start capture if not already running
+    if (!packetCapture.isCapturing) {
+        startCapture();
+    }
+    
+    // Hook into capture updates
+    const originalUpdate = window.updateCaptureDisplay;
+    window.updateCaptureDisplay = function(packet) {
+        if (originalUpdate) originalUpdate(packet);
+        
+        if (profilingActive && performanceProfiler) {
+            // Add simulated latency for demo
+            packet.latency = 20 + Math.random() * 100;
+            performanceProfiler.addPacket(packet);
+        }
+    };
+    
+    // Start update interval
+    profileUpdateInterval = setInterval(updateProfilerDisplay, 1000);
+}
+
+function stopProfiling() {
+    profilingActive = false;
+    
+    document.getElementById("start-profile-btn").disabled = false;
+    document.getElementById("stop-profile-btn").disabled = true;
+    
+    if (profileUpdateInterval) {
+        clearInterval(profileUpdateInterval);
+        profileUpdateInterval = null;
+    }
+    
+    // Final update
+    updateProfilerDisplay();
+    generateOptimizationSuggestions();
+}
+
+function resetProfiler() {
+    if (performanceProfiler) {
+        performanceProfiler.reset();
+        updateProfilerDisplay();
+        document.getElementById("optimization-list").innerHTML = "";
+    }
+}
+
+function updateProfilerDisplay() {
+    if (!performanceProfiler) return;
+    
+    // Update stats
+    const totalPackets = Array.from(performanceProfiler.stats.packetFrequency.values())
+        .reduce((sum, stat) => sum + stat.count, 0);
+    document.getElementById("prof-total-packets").textContent = totalPackets;
+    
+    // Calculate current bandwidth
+    const recentBandwidth = Array.from(performanceProfiler.stats.bandwidthUsage.values()).slice(-1)[0];
+    if (recentBandwidth) {
+        const bwKBps = (recentBandwidth.total / 60).toFixed(1);
+        document.getElementById("prof-bandwidth").textContent = `${bwKBps} KB/s`;
+    }
+    
+    // Average latency
+    const latencyReport = performanceProfiler.generateLatencyReport();
+    document.getElementById("prof-latency").textContent = 
+        `${latencyReport.overall.avgLatency.toFixed(0)} ms`;
+    
+    // Active time
+    if (profileStartTime) {
+        const elapsed = Date.now() - profileStartTime;
+        const minutes = Math.floor(elapsed / 60000);
+        const seconds = Math.floor((elapsed % 60000) / 1000);
+        document.getElementById("prof-time").textContent = 
+            `${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+    }
+    
+    // Update visualizations
+    performanceProfiler.generateHeatmap("freq-heatmap");
+    performanceProfiler.generateBandwidthChart("bandwidth-chart");
+    
+    // Update tables
+    updateFrequencyTable();
+    updateLatencyTable();
+}
+
+function updateFrequencyTable() {
+    const tbody = document.querySelector("#freq-table tbody");
+    tbody.innerHTML = "";
+    
+    const freqData = Array.from(performanceProfiler.stats.packetFrequency.entries())
+        .map(([opcode, stat]) => ({
+            opcode,
+            name: PACKET_DEFINITIONS[opcode]?.name || "Unknown",
+            count: stat.count,
+            rate: stat.timestamps.length,
+            avgSize: stat.avgSize
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+    
+    freqData.forEach(data => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${data.opcode}</td>
+            <td>${data.name}</td>
+            <td>${data.count}</td>
+            <td>${data.rate}/min</td>
+            <td>${data.avgSize.toFixed(1)} B</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateLatencyTable() {
+    const tbody = document.querySelector("#latency-table tbody");
+    tbody.innerHTML = "";
+    
+    performanceProfiler.stats.latencyMeasurements.forEach((stat, opcode) => {
+        if (stat.samples.length === 0) return;
+        
+        const sorted = [...stat.samples].sort((a, b) => a - b);
+        const p95 = performanceProfiler.percentile(sorted, 95);
+        
+        const row = document.createElement("tr");
+        row.innerHTML = `
+            <td>${PACKET_DEFINITIONS[opcode]?.name || `Opcode ${opcode}`}</td>
+            <td>${stat.min.toFixed(0)} ms</td>
+            <td>${stat.avg.toFixed(0)} ms</td>
+            <td>${stat.max.toFixed(0)} ms</td>
+            <td>${p95.toFixed(0)} ms</td>
+        `;
+        
+        // Highlight high latency
+        if (stat.avg > 100) {
+            row.classList.add("high-latency");
+        }
+        
+        tbody.appendChild(row);
+    });
+}
+
+function generateOptimizationSuggestions() {
+    if (!performanceProfiler) return;
+    
+    const suggestions = performanceProfiler.generateOptimizationSuggestions();
+    const container = document.getElementById("optimization-list");
+    
+    container.innerHTML = "";
+    
+    if (suggestions.length === 0) {
+        container.innerHTML = "<p class=\"no-suggestions\">No optimization suggestions at this time.</p>";
+        return;
+    }
+    
+    suggestions.forEach(suggestion => {
+        const div = document.createElement("div");
+        div.className = `suggestion-item ${suggestion.priority}`;
+        
+        div.innerHTML = `
+            <div class="suggestion-header">
+                <span class="suggestion-type">${suggestion.type.toUpperCase()}</span>
+                <span class="suggestion-priority">${suggestion.priority.toUpperCase()}</span>
+            </div>
+            <div class="suggestion-body">
+                <p><strong>${suggestion.description}</strong></p>
+                <p class="recommendation">💡 ${suggestion.recommendation}</p>
+                ${suggestion.packet ? `<p class="packet-info">Affects: ${suggestion.packet}</p>` : ""}
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
+}
+
+function exportProfile() {
+    if (!performanceProfiler) return;
+    
+    const report = performanceProfiler.exportReport();
+    const blob = new Blob([report], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `performance-profile-${Date.now()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function refreshProfilerView() {
+    updateProfilerDisplay();
+    generateOptimizationSuggestions();
+}

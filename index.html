@@ -21,6 +21,7 @@
             <button class="tab-button" onclick="switchTab('fuzzer')">Fuzzer</button>
             <button class="tab-button" onclick="switchTab('flow')">Flow Diagrams</button>
             <button class="tab-button" onclick="switchTab('botgen')">Bot Generator</button>
+            <button class="tab-button" onclick="switchTab('profiler')">Profiler</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -511,6 +512,89 @@
             </div>
         </div>
 
+        <!-- Profiler Tab -->
+        <div id="profiler" class="tab-content">
+            <h2>Performance Profiler</h2>
+            
+            <div class="profiler-controls">
+                <button onclick="startProfiling()" id="start-profile-btn">▶ Start Profiling</button>
+                <button onclick="stopProfiling()" id="stop-profile-btn" disabled>⏹ Stop</button>
+                <button onclick="resetProfiler()">🗑 Reset</button>
+                <button onclick="exportProfile()">📥 Export Report</button>
+                <button onclick="refreshProfilerView()">🔄 Refresh</button>
+            </div>
+            
+            <div class="profiler-stats">
+                <div class="stat-card">
+                    <h4>Total Packets</h4>
+                    <div class="stat-value" id="prof-total-packets">0</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Bandwidth</h4>
+                    <div class="stat-value" id="prof-bandwidth">0 KB/s</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Avg Latency</h4>
+                    <div class="stat-value" id="prof-latency">0 ms</div>
+                </div>
+                <div class="stat-card">
+                    <h4>Active Time</h4>
+                    <div class="stat-value" id="prof-time">00:00</div>
+                </div>
+            </div>
+            
+            <div class="profiler-visualizations">
+                <div class="viz-section">
+                    <h3>Packet Frequency Heatmap</h3>
+                    <canvas id="freq-heatmap" width="600" height="300"></canvas>
+                </div>
+                
+                <div class="viz-section">
+                    <h3>Bandwidth Usage</h3>
+                    <canvas id="bandwidth-chart" width="600" height="300"></canvas>
+                </div>
+            </div>
+            
+            <div class="profiler-tables">
+                <div class="table-section">
+                    <h3>Top Packets by Frequency</h3>
+                    <table id="freq-table">
+                        <thead>
+                            <tr>
+                                <th>Opcode</th>
+                                <th>Name</th>
+                                <th>Count</th>
+                                <th>Rate</th>
+                                <th>Avg Size</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                
+                <div class="table-section">
+                    <h3>Latency Analysis</h3>
+                    <table id="latency-table">
+                        <thead>
+                            <tr>
+                                <th>Packet</th>
+                                <th>Min</th>
+                                <th>Avg</th>
+                                <th>Max</th>
+                                <th>P95</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="optimization-suggestions">
+                <h3>Optimization Suggestions</h3>
+                <div id="optimization-list"></div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -541,6 +625,7 @@
     <script src="modules/fuzzer/protocol-fuzzer.js"></script>
     <script src="modules/flow/packet-flow.js"></script>
     <script src="modules/botgen/bot-generator.js"></script>
+    <script src="modules/profiler/performance-profiler.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
