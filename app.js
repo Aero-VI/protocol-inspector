@@ -1292,3 +1292,55 @@ function exportEncyclopedia(format) {
     a.click();
     URL.revokeObjectURL(url);
 }
+
+// Byte Visualizer Functions
+let byteVisualizer = null;
+let lastDecodedPacket = null;
+
+// Initialize visualizer on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.ByteStructureVisualizer) {
+        byteVisualizer = new ByteStructureVisualizer("byte-visualizer");
+    }
+});
+
+function visualizeLastPacket() {
+    if (!lastDecodedPacket) return;
+    
+    const visualizerSection = document.getElementById("byte-visualizer");
+    visualizerSection.style.display = "block";
+    
+    byteVisualizer.visualizePacket(
+        lastDecodedPacket.hex,
+        lastDecodedPacket.definition
+    );
+    
+    // Scroll to visualizer
+    visualizerSection.scrollIntoView({ behavior: "smooth" });
+}
+
+// Update the decode function to save last packet
+const originalDecodePacket = window.decodePacket;
+window.decodePacket = function() {
+    const hexInput = document.getElementById("hex-input").value;
+    const cleanHex = hexInput.replace(/[^0-9a-fA-F]/g, "");
+    
+    if (cleanHex.length < 2) {
+        alert("Please enter a valid hex packet");
+        return;
+    }
+    
+    // Decode the packet
+    originalDecodePacket();
+    
+    // Save for visualization
+    const opcode = parseInt(cleanHex.substr(0, 2), 16);
+    lastDecodedPacket = {
+        hex: hexInput,
+        opcode: opcode,
+        definition: PACKET_DEFINITIONS[opcode]
+    };
+    
+    // Show visualize button
+    document.getElementById("visualize-btn").style.display = "inline-block";
+};

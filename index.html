@@ -32,6 +32,10 @@
             
             <div id="decode-result" class="result-box"></div>
             
+            <button id="visualize-btn" onclick="visualizeLastPacket()" style="display: none;">🔍 Visualize Structure</button>
+            
+            <div id="byte-visualizer" class="visualizer-section" style="display: none;"></div>
+            
             <div class="recent-section">
                 <h3>Recent Packets</h3>
                 <div id="recent-packets"></div>
@@ -313,6 +317,7 @@
     <script src="modules/replay/packet-replay.js"></script>
     <script src="modules/differ/protocol-differ.js"></script>
     <script src="modules/encyclopedia/opcode-encyclopedia.js"></script>
+    <script src="modules/visualizer/byte-visualizer.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
