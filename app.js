@@ -577,3 +577,179 @@ function importPCAP(event) {
     };
     reader.readAsArrayBuffer(file);
 }
+// Replay Engine Functions
+let replayEngine = null;
+let hexEditor = null;
+let selectedPacketIndex = null;
+
+// Initialize replay engine on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.PacketReplayEngine) {
+        replayEngine = new PacketReplayEngine();
+        hexEditor = new HexEditor("hex-editor");
+        
+        hexEditor.onchange = function(newData) {
+            if (selectedPacketIndex !== null) {
+                replayEngine.modifyPacket(selectedPacketIndex, newData);
+            }
+        };
+    }
+});
+
+function loadCaptureToReplay() {
+    if (!packetCapture || !packetCapture.packets || packetCapture.packets.length === 0) {
+        alert("No captured packets to load");
+        return;
+    }
+    
+    const sessionName = prompt("Session name:", `Capture ${new Date().toLocaleString()}`);
+    if (!sessionName) return;
+    
+    replayEngine.loadFromCapture(packetCapture, sessionName);
+    updateReplayUI();
+}
+
+function importSession(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            replayEngine.loadSessionFromFile(e.target.result);
+            updateReplayUI();
+        } catch (error) {
+            alert("Failed to load session: " + error.message);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function saveReplaySession() {
+    if (!replayEngine.currentSession) {
+        alert("No session to save");
+        return;
+    }
+    
+    const filename = `${replayEngine.currentSession.name.replace(/[^a-z0-9]/gi, "_")}_${Date.now()}.json`;
+    replayEngine.saveSession(filename);
+}
+
+function updatePlaybackSpeed(speed) {
+    replayEngine.setSpeed(parseFloat(speed));
+    document.getElementById("speed-display").textContent = speed + "x";
+}
+
+function seekToPacket(index) {
+    replayEngine.seekToPacket(parseInt(index));
+}
+
+function updateReplayUI() {
+    if (!replayEngine.currentSession) return;
+    
+    const session = replayEngine.currentSession;
+    document.getElementById("session-name").textContent = session.name;
+    document.getElementById("replay-packet-count").textContent = session.packets.length;
+    document.getElementById("replay-progress").textContent = 
+        `${replayEngine.currentPacketIndex + 1}/${session.packets.length}`;
+    document.getElementById("modified-count").textContent = replayEngine.modifiedPackets.size;
+    
+    // Update seek slider
+    const seekSlider = document.getElementById("packet-seek");
+    seekSlider.max = session.packets.length - 1;
+    seekSlider.value = replayEngine.currentPacketIndex;
+    
+    // Update packet list
+    renderReplayPacketList();
+}
+
+window.updateReplayUI = updateReplayUI;
+
+function renderReplayPacketList() {
+    const listContainer = document.getElementById("replay-packet-list");
+    listContainer.innerHTML = "";
+    
+    if (!replayEngine.currentSession) return;
+    
+    replayEngine.currentSession.packets.forEach((packet, index) => {
+        const div = document.createElement("div");
+        div.className = "replay-packet-item";
+        
+        if (index === replayEngine.currentPacketIndex) {
+            div.classList.add("current");
+        }
+        
+        if (replayEngine.modifiedPackets.has(index)) {
+            div.classList.add("modified");
+        }
+        
+        const definition = PACKET_DEFINITIONS[packet.opcode];
+        const name = definition ? definition.name : "Unknown";
+        
+        div.innerHTML = `
+            <span class="packet-index">${index}</span>
+            <span class="packet-time">${(packet.timestamp / 1000).toFixed(2)}s</span>
+            <span class="packet-dir ${packet.direction}">${packet.direction === "client" ? "C→S" : "S→C"}</span>
+            <span class="packet-opcode">${packet.opcode}</span>
+            <span class="packet-name">${name}</span>
+        `;
+        
+        div.onclick = () => selectReplayPacket(index);
+        
+        listContainer.appendChild(div);
+    });
+    
+    // Scroll current packet into view
+    const currentItem = listContainer.querySelector(".current");
+    if (currentItem) {
+        currentItem.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+}
+
+function selectReplayPacket(index) {
+    selectedPacketIndex = index;
+    const packet = replayEngine.currentSession.packets[index];
+    
+    // Update hex editor
+    const modifiedData = replayEngine.modifiedPackets.get(index);
+    hexEditor.setData(modifiedData || packet.data, packet.originalData);
+    
+    // Update UI
+    document.querySelectorAll(".replay-packet-item").forEach((item, i) => {
+        if (i === index) {
+            item.classList.add("selected");
+        } else {
+            item.classList.remove("selected");
+        }
+    });
+}
+
+function resetCurrentPacket() {
+    if (selectedPacketIndex === null) return;
+    
+    replayEngine.resetPacket(selectedPacketIndex);
+    const packet = replayEngine.currentSession.packets[selectedPacketIndex];
+    hexEditor.setData(packet.originalData, packet.originalData);
+    updateReplayUI();
+}
+
+function applyModification() {
+    if (selectedPacketIndex === null) return;
+    
+    const newData = hexEditor.getData();
+    replayEngine.modifyPacket(selectedPacketIndex, newData);
+    updateReplayUI();
+}
+
+// Handle replay events
+window.onReplayPacket = function(packet, data, isModified) {
+    // Visual feedback during replay
+    const listItems = document.querySelectorAll(".replay-packet-item");
+    if (listItems[packet.index]) {
+        listItems[packet.index].classList.add("replaying");
+        setTimeout(() => {
+            listItems[packet.index].classList.remove("replaying");
+        }, 500);
+    }
+};
+

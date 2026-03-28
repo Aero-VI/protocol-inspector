@@ -413,3 +413,180 @@ td:first-child {
     text-overflow: ellipsis;
     max-width: 400px;
 }
+
+/* Replay Tab Styles */
+.replay-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.session-controls,
+.playback-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: 20px;
+}
+
+#speed-slider {
+    width: 100px;
+}
+
+.replay-info {
+    display: flex;
+    gap: 30px;
+    padding: 10px;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    font-size: 14px;
+}
+
+.replay-timeline {
+    margin: 20px 0;
+}
+
+#packet-seek {
+    width: 100%;
+}
+
+.replay-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 20px;
+    height: 500px;
+}
+
+.packet-list {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+.replay-packet-item {
+    display: flex;
+    gap: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: monospace;
+    border-bottom: 1px solid #2a2a2a;
+}
+
+.replay-packet-item:hover {
+    background: #252525;
+}
+
+.replay-packet-item.current {
+    background: #2a3a4a;
+}
+
+.replay-packet-item.selected {
+    background: #3a3a3a;
+    border: 1px solid #4a4a4a;
+}
+
+.replay-packet-item.modified {
+    border-left: 3px solid #f39c12;
+}
+
+.replay-packet-item.replaying {
+    animation: pulse 0.5s ease-out;
+}
+
+@keyframes pulse {
+    0% { background: #4a5a6a; }
+    100% { background: transparent; }
+}
+
+.packet-index {
+    color: #6a6a6a;
+    min-width: 40px;
+}
+
+.packet-time {
+    color: #8a8a8a;
+    min-width: 60px;
+}
+
+.packet-dir {
+    min-width: 40px;
+}
+
+.packet-dir.client {
+    color: #4a90e2;
+}
+
+.packet-dir.server {
+    color: #e24a4a;
+}
+
+.packet-opcode {
+    color: #f39c12;
+    min-width: 40px;
+}
+
+.hex-editor-container {
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    padding: 10px;
+    overflow: auto;
+}
+
+.editor-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+/* Hex Editor Styles */
+.hex-editor-table {
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+    width: 100%;
+}
+
+.hex-editor-table th,
+.hex-editor-table td {
+    padding: 4px;
+}
+
+.hex-offset {
+    color: #8a8a8a;
+    font-weight: bold;
+}
+
+.hex-input {
+    width: 28px;
+    background: #2a2a2a;
+    border: 1px solid #3a3a3a;
+    color: #e8e8e8;
+    text-align: center;
+    font-family: monospace;
+    padding: 2px;
+}
+
+.hex-input:focus {
+    outline: none;
+    border-color: #4a90e2;
+    background: #3a3a3a;
+}
+
+.hex-input.modified {
+    background: #4a3a1a;
+    color: #f39c12;
+}
+
+.hex-ascii {
+    color: #a8a8a8;
+    font-family: monospace;
+    padding-left: 20px;
+}

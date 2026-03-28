@@ -15,6 +15,7 @@
             <button class="tab-button active" onclick="switchTab('decoder')">Decoder</button>
             <button class="tab-button" onclick="switchTab('builder')">Builder</button>
             <button class="tab-button" onclick="switchTab('capture')">Live Capture</button>
+            <button class="tab-button" onclick="switchTab('replay')">Replay</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -126,6 +127,61 @@
             </div>
         </div>
 
+        <!-- Replay Tab -->
+        <div id="replay" class="tab-content">
+            <h2>Packet Replay Engine</h2>
+            
+            <div class="replay-controls">
+                <div class="session-controls">
+                    <button onclick="loadCaptureToReplay()">📥 Load from Capture</button>
+                    <input type="file" id="session-import" accept=".json" onchange="importSession(event)" style="display: none;">
+                    <button onclick="document.getElementById('session-import').click()">📤 Import Session</button>
+                    <button onclick="saveReplaySession()">💾 Save Session</button>
+                </div>
+                
+                <div class="playback-controls">
+                    <button onclick="replayEngine.play()" id="play-btn">▶ Play</button>
+                    <button onclick="replayEngine.pause()" id="pause-btn">⏸ Pause</button>
+                    <button onclick="replayEngine.stop()">⏹ Stop</button>
+                    
+                    <div class="speed-control">
+                        <label>Speed:</label>
+                        <input type="range" id="speed-slider" min="0.1" max="5" step="0.1" value="1" 
+                               oninput="updatePlaybackSpeed(this.value)">
+                        <span id="speed-display">1.0x</span>
+                    </div>
+                </div>
+                
+                <div class="replay-info">
+                    <span>Session: <strong id="session-name">None</strong></span>
+                    <span>Packets: <strong id="replay-packet-count">0</strong></span>
+                    <span>Progress: <strong id="replay-progress">0/0</strong></span>
+                    <span>Modified: <strong id="modified-count">0</strong></span>
+                </div>
+            </div>
+            
+            <div class="replay-timeline">
+                <input type="range" id="packet-seek" min="0" max="0" value="0" 
+                       oninput="seekToPacket(this.value)">
+            </div>
+            
+            <div class="replay-content">
+                <div class="packet-list">
+                    <h3>Packet List</h3>
+                    <div id="replay-packet-list"></div>
+                </div>
+                
+                <div class="hex-editor-container">
+                    <h3>Hex Editor</h3>
+                    <div class="editor-controls">
+                        <button onclick="resetCurrentPacket()">↺ Reset</button>
+                        <button onclick="applyModification()">✓ Apply</button>
+                    </div>
+                    <div id="hex-editor"></div>
+                </div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -148,6 +204,7 @@
     </div>
     
     <script src="modules/capture/packet-capture.js"></script>
+    <script src="modules/replay/packet-replay.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
