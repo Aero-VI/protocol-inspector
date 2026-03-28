@@ -17,6 +17,7 @@
             <button class="tab-button" onclick="switchTab('capture')">Live Capture</button>
             <button class="tab-button" onclick="switchTab('replay')">Replay</button>
             <button class="tab-button" onclick="switchTab('differ')">Version Diff</button>
+            <button class="tab-button" onclick="switchTab('encyclopedia')">Encyclopedia</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -236,6 +237,57 @@
             </div>
         </div>
 
+        <!-- Encyclopedia Tab -->
+        <div id="encyclopedia" class="tab-content">
+            <h2>Opcode Encyclopedia</h2>
+            
+            <div class="encyclopedia-controls">
+                <div class="search-box">
+                    <input type="text" id="opcode-search" placeholder="Search by opcode, name, or keyword..." 
+                           oninput="searchOpcodes(this.value)">
+                </div>
+                
+                <div class="filter-controls">
+                    <select id="category-filter" onchange="filterByCategory(this.value)">
+                        <option value="">All Categories</option>
+                        <option value="Movement">Movement</option>
+                        <option value="Combat">Combat</option>
+                        <option value="Items">Items</option>
+                        <option value="Communication">Communication</option>
+                        <option value="Interface">Interface</option>
+                        <option value="Player Interaction">Player Interaction</option>
+                        <option value="NPC Interaction">NPC Interaction</option>
+                        <option value="System">System</option>
+                    </select>
+                    
+                    <button onclick="showVulnerabilities()" class="vuln-btn">🛡️ Vulnerabilities</button>
+                    <button onclick="exportEncyclopedia('markdown')">📝 Export Docs</button>
+                </div>
+            </div>
+            
+            <div class="encyclopedia-stats">
+                <span>Total Opcodes: <strong id="total-opcodes">0</strong></span>
+                <span>Documented: <strong id="documented-opcodes">0</strong></span>
+                <span>Vulnerabilities: <strong id="vuln-count">0</strong></span>
+            </div>
+            
+            <div class="encyclopedia-content">
+                <div class="opcode-list" id="opcode-list"></div>
+                
+                <div class="opcode-detail" id="opcode-detail">
+                    <div class="detail-placeholder">Select an opcode to view details</div>
+                </div>
+            </div>
+            
+            <div class="vulnerability-modal" id="vuln-modal" style="display: none;">
+                <div class="modal-content">
+                    <h3>Known Vulnerabilities</h3>
+                    <div id="vuln-list"></div>
+                    <button onclick="closeVulnModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -260,6 +312,7 @@
     <script src="modules/capture/packet-capture.js"></script>
     <script src="modules/replay/packet-replay.js"></script>
     <script src="modules/differ/protocol-differ.js"></script>
+    <script src="modules/encyclopedia/opcode-encyclopedia.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

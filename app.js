@@ -1001,3 +1001,294 @@ function exportDiff(format) {
     a.click();
     URL.revokeObjectURL(url);
 }
+
+// Encyclopedia Functions
+let opcodeEncyclopedia = null;
+let selectedOpcode = null;
+
+// Initialize encyclopedia on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.OpcodeEncyclopedia) {
+        opcodeEncyclopedia = new OpcodeEncyclopedia();
+        updateEncyclopediaStats();
+        displayAllOpcodes();
+    }
+});
+
+function updateEncyclopediaStats() {
+    const totalOpcodes = Object.keys(opcodeEncyclopedia.opcodes).length;
+    document.getElementById("total-opcodes").textContent = totalOpcodes;
+    document.getElementById("documented-opcodes").textContent = totalOpcodes;
+    
+    const vulnCount = opcodeEncyclopedia.getVulnerabilities().length;
+    document.getElementById("vuln-count").textContent = vulnCount;
+}
+
+function displayAllOpcodes() {
+    const opcodes = Object.entries(opcodeEncyclopedia.opcodes)
+        .map(([opcode, data]) => ({ opcode, data }));
+    displayOpcodeList(opcodes);
+}
+
+function displayOpcodeList(opcodes) {
+    const listContainer = document.getElementById("opcode-list");
+    listContainer.innerHTML = "";
+    
+    opcodes.forEach(({ opcode, data }) => {
+        const item = document.createElement("div");
+        item.className = "opcode-item";
+        
+        const vulnerableClass = data.vulnerabilities && data.vulnerabilities.length > 0 ? "vulnerable" : "";
+        
+        item.innerHTML = `
+            <div class="opcode-header ${vulnerableClass}">
+                <span class="opcode-number">${opcode}</span>
+                <span class="opcode-name">${data.name}</span>
+                ${vulnerableClass ? "<span class=\"vuln-indicator\">⚠️</span>" : ""}
+            </div>
+            <div class="opcode-meta">
+                <span class="category">${data.category}</span>
+                <span class="direction">${data.direction}</span>
+                <span class="size">Size: ${data.size === -1 ? "var" : data.size}</span>
+            </div>
+        `;
+        
+        item.onclick = () => showOpcodeDetail(opcode, data);
+        listContainer.appendChild(item);
+    });
+}
+
+function showOpcodeDetail(opcode, data) {
+    selectedOpcode = opcode;
+    const detailContainer = document.getElementById("opcode-detail");
+    
+    let html = `
+        <div class="detail-header">
+            <h3>Opcode ${opcode}: ${data.name}</h3>
+            <div class="detail-actions">
+                <button onclick="addCommunityNote(${opcode})">📝 Add Note</button>
+                <button onclick="copyOpcodeLink(${opcode})">🔗 Copy Link</button>
+            </div>
+        </div>
+        
+        <div class="detail-info">
+            <div class="info-row">
+                <span class="label">Category:</span>
+                <span class="value">${data.category}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Direction:</span>
+                <span class="value">${data.direction}</span>
+            </div>
+            <div class="info-row">
+                <span class="label">Size:</span>
+                <span class="value">${data.size === -1 ? "Variable" : data.size + " bytes"}</span>
+            </div>
+        </div>
+        
+        <div class="detail-section">
+            <h4>Description</h4>
+            <p>${data.description}</p>
+        </div>
+    `;
+    
+    if (data.fields && data.fields.length > 0) {
+        html += `
+            <div class="detail-section">
+                <h4>Packet Structure</h4>
+                <table class="field-table">
+                    <tr>
+                        <th>Offset</th>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>Modifier</th>
+                        <th>Description</th>
+                    </tr>
+        `;
+        
+        let offset = 1; // Skip opcode byte
+        data.fields.forEach(field => {
+            const size = getFieldSize(field.type);
+            html += `
+                <tr>
+                    <td>${offset}</td>
+                    <td>${field.name}</td>
+                    <td>${field.type}</td>
+                    <td>${field.modifier || "-"}</td>
+                    <td>${field.description}</td>
+                </tr>
+            `;
+            offset += size;
+        });
+        
+        html += "</table></div>";
+    }
+    
+    if (data.notes) {
+        html += `
+            <div class="detail-section">
+                <h4>Notes</h4>
+                <p>${data.notes}</p>
+            </div>
+        `;
+    }
+    
+    if (data.vulnerabilities && data.vulnerabilities.length > 0) {
+        html += `
+            <div class="detail-section vulnerabilities">
+                <h4>⚠️ Known Vulnerabilities</h4>
+        `;
+        
+        data.vulnerabilities.forEach(vuln => {
+            html += `
+                <div class="vuln-item ${vuln.severity}">
+                    <span class="vuln-severity">${vuln.severity.toUpperCase()}</span>
+                    <span class="vuln-type">${vuln.type}</span>
+                    <p>${vuln.description}</p>
+                    <span class="vuln-status">${vuln.patched ? "✅ Patched" : "❌ Unpatched"}</span>
+                </div>
+            `;
+        });
+        
+        html += "</div>";
+    }
+    
+    if (data.examples && data.examples.length > 0) {
+        html += `
+            <div class="detail-section">
+                <h4>Examples</h4>
+        `;
+        
+        data.examples.forEach(example => {
+            html += `
+                <div class="example-item">
+                    <code>${example.hex}</code>
+                    <p>${example.description}</p>
+                </div>
+            `;
+        });
+        
+        html += "</div>";
+    }
+    
+    if (data.communityNotes && data.communityNotes.length > 0) {
+        html += `
+            <div class="detail-section community-notes">
+                <h4>Community Notes</h4>
+        `;
+        
+        data.communityNotes.forEach(note => {
+            html += `
+                <div class="note-item">
+                    <div class="note-header">
+                        <span class="note-author">${note.author}</span>
+                        <span class="note-date">${new Date(note.date).toLocaleDateString()}</span>
+                    </div>
+                    <p>${note.text}</p>
+                </div>
+            `;
+        });
+        
+        html += "</div>";
+    }
+    
+    detailContainer.innerHTML = html;
+}
+
+function getFieldSize(type) {
+    switch(type) {
+        case "byte": return 1;
+        case "short": return 2;
+        case "int": return 4;
+        case "long": return 8;
+        default: return 1;
+    }
+}
+
+function searchOpcodes(query) {
+    if (!query) {
+        displayAllOpcodes();
+        return;
+    }
+    
+    const results = opcodeEncyclopedia.search(query);
+    displayOpcodeList(results);
+}
+
+function filterByCategory(category) {
+    if (!category) {
+        displayAllOpcodes();
+        return;
+    }
+    
+    const results = opcodeEncyclopedia.getByCategory(category);
+    displayOpcodeList(results);
+}
+
+function showVulnerabilities() {
+    const vulns = opcodeEncyclopedia.getVulnerabilities();
+    const modal = document.getElementById("vuln-modal");
+    const list = document.getElementById("vuln-list");
+    
+    list.innerHTML = "";
+    
+    vulns.forEach(({ opcode, name, vulnerability }) => {
+        const item = document.createElement("div");
+        item.className = `vuln-report-item ${vulnerability.severity}`;
+        
+        item.innerHTML = `
+            <div class="vuln-report-header">
+                <span class="vuln-opcode">Opcode ${opcode}: ${name}</span>
+                <span class="vuln-severity">${vulnerability.severity.toUpperCase()}</span>
+            </div>
+            <div class="vuln-report-body">
+                <p><strong>Type:</strong> ${vulnerability.type}</p>
+                <p>${vulnerability.description}</p>
+                <p><strong>Status:</strong> ${vulnerability.patched ? "✅ Patched" : "❌ Unpatched"}</p>
+            </div>
+        `;
+        
+        list.appendChild(item);
+    });
+    
+    modal.style.display = "flex";
+}
+
+function closeVulnModal() {
+    document.getElementById("vuln-modal").style.display = "none";
+}
+
+function addCommunityNote(opcode) {
+    const author = prompt("Your name:");
+    if (!author) return;
+    
+    const text = prompt("Your note:");
+    if (!text) return;
+    
+    if (opcodeEncyclopedia.addCommunityNote(opcode, author, text)) {
+        // Refresh detail view
+        const data = opcodeEncyclopedia.opcodes[opcode];
+        showOpcodeDetail(opcode, data);
+    }
+}
+
+function copyOpcodeLink(opcode) {
+    const url = window.location.origin + window.location.pathname + "#opcode-" + opcode;
+    navigator.clipboard.writeText(url).then(() => {
+        alert("Link copied to clipboard!");
+    });
+}
+
+function exportEncyclopedia(format) {
+    const data = opcodeEncyclopedia.exportDocumentation(format);
+    const filename = `rsps-508-protocol-docs.${format === "json" ? "json" : "md"}`;
+    const mimeType = format === "json" ? "application/json" : "text/markdown";
+    
+    const blob = new Blob([data], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
