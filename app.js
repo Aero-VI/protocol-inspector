@@ -753,3 +753,251 @@ window.onReplayPacket = function(packet, data, isModified) {
     }
 };
 
+
+// Protocol Differ Functions
+let protocolDiffer = null;
+let currentDiffFilter = "all";
+
+// Initialize differ on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.ProtocolDiffer) {
+        protocolDiffer = new ProtocolDiffer();
+        // Initial diff
+        setTimeout(updateDiff, 100);
+    }
+});
+
+function updateDiff() {
+    const fromVersion = document.getElementById("from-version").value;
+    const toVersion = document.getElementById("to-version").value;
+    
+    if (fromVersion === toVersion) {
+        document.getElementById("diff-display").innerHTML = 
+            "<p class=\"no-diff\">Select different versions to compare</p>";
+        return;
+    }
+    
+    const diff = protocolDiffer.compareVersions(fromVersion, toVersion);
+    displayDiff(diff);
+    updateDiffSummary(diff);
+}
+
+function displayDiff(diff) {
+    const container = document.getElementById("diff-display");
+    container.innerHTML = "";
+    
+    // Added packets
+    if (diff.added.length > 0 && (currentDiffFilter === "all" || currentDiffFilter === "added")) {
+        const section = createDiffSection("Added Packets", diff.added, "added");
+        container.appendChild(section);
+    }
+    
+    // Removed packets
+    if (diff.removed.length > 0 && (currentDiffFilter === "all" || currentDiffFilter === "removed")) {
+        const section = createDiffSection("Removed Packets", diff.removed, "removed");
+        container.appendChild(section);
+    }
+    
+    // Modified packets
+    if (diff.modified.length > 0 && (currentDiffFilter === "all" || currentDiffFilter === "modified")) {
+        const section = createModifiedSection(diff.modified);
+        container.appendChild(section);
+    }
+    
+    // Unchanged packets
+    if (currentDiffFilter === "unchanged") {
+        const section = createDiffSection("Unchanged Packets", diff.unchanged, "unchanged");
+        container.appendChild(section);
+    }
+}
+
+function createDiffSection(title, items, type) {
+    const section = document.createElement("div");
+    section.className = `diff-section ${type}`;
+    
+    const header = document.createElement("h3");
+    header.textContent = `${title} (${items.length})`;
+    section.appendChild(header);
+    
+    const list = document.createElement("div");
+    list.className = "diff-list";
+    
+    items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "diff-item";
+        
+        const packet = item.packet || item.packet1;
+        div.innerHTML = `
+            <span class="opcode">${item.opcode}</span>
+            <span class="name">${packet.name}</span>
+            <span class="size">Size: ${packet.size === -1 ? "variable" : packet.size}</span>
+            <span class="fields">${packet.fields.length} fields</span>
+        `;
+        
+        list.appendChild(div);
+    });
+    
+    section.appendChild(list);
+    return section;
+}
+
+function createModifiedSection(items) {
+    const section = document.createElement("div");
+    section.className = "diff-section modified";
+    
+    const header = document.createElement("h3");
+    header.textContent = `Modified Packets (${items.length})`;
+    section.appendChild(header);
+    
+    const list = document.createElement("div");
+    list.className = "diff-list";
+    
+    items.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "diff-item modified";
+        
+        div.innerHTML = `
+            <div class="diff-header">
+                <span class="opcode">${item.opcode}</span>
+                <span class="name">${item.packet1.name}</span>
+            </div>
+            <div class="diff-changes">
+                ${item.changes.map(change => formatChange(change)).join("<br>")}
+            </div>
+        `;
+        
+        list.appendChild(div);
+    });
+    
+    section.appendChild(list);
+    return section;
+}
+
+function formatChange(change) {
+    const icon = getChangeIcon(change.type);
+    return `<span class="change ${change.type}">${icon} ${protocolDiffer.formatChange(change)}</span>`;
+}
+
+function getChangeIcon(type) {
+    switch(type) {
+        case "name": return "📝";
+        case "size": return "📏";
+        case "field_modified": return "🔄";
+        case "field_added": return "➕";
+        case "field_removed": return "➖";
+        default: return "•";
+    }
+}
+
+function updateDiffSummary(diff) {
+    const summary = document.getElementById("diff-summary");
+    summary.innerHTML = `
+        <div class="summary-item">
+            <span class="label">Version:</span>
+            <span class="value">${diff.version1} → ${diff.version2}</span>
+        </div>
+        <div class="summary-item added">
+            <span class="label">Added:</span>
+            <span class="value">${diff.added.length}</span>
+        </div>
+        <div class="summary-item removed">
+            <span class="label">Removed:</span>
+            <span class="value">${diff.removed.length}</span>
+        </div>
+        <div class="summary-item modified">
+            <span class="label">Modified:</span>
+            <span class="value">${diff.modified.length}</span>
+        </div>
+        <div class="summary-item unchanged">
+            <span class="label">Unchanged:</span>
+            <span class="value">${diff.unchanged.length}</span>
+        </div>
+    `;
+}
+
+function filterDiff(filter) {
+    currentDiffFilter = filter;
+    
+    // Update button states
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+        btn.classList.remove("active");
+    });
+    event.target.classList.add("active");
+    
+    // Re-render diff
+    updateDiff();
+}
+
+function generateMigrationGuide() {
+    const fromVersion = document.getElementById("from-version").value;
+    const toVersion = document.getElementById("to-version").value;
+    
+    if (fromVersion === toVersion) {
+        alert("Select different versions to generate migration guide");
+        return;
+    }
+    
+    const guide = protocolDiffer.generateMigrationGuide(fromVersion, toVersion);
+    displayMigrationGuide(guide);
+}
+
+function displayMigrationGuide(guide) {
+    const container = document.getElementById("migration-guide");
+    const content = document.getElementById("migration-content");
+    
+    content.innerHTML = `
+        <h4>Migrating from ${guide.fromVersion} to ${guide.toVersion}</h4>
+        
+        <div class="breaking-changes">
+            <h5>Breaking Changes (${guide.breakingChanges.length})</h5>
+            ${guide.breakingChanges.map(change => `
+                <div class="breaking-change">
+                    <strong>Opcode ${change.opcode}:</strong> ${change.recommendation}
+                </div>
+            `).join("")}
+        </div>
+        
+        <div class="migration-steps">
+            <h5>Migration Steps</h5>
+            ${guide.migrations.map(step => `
+                <div class="migration-step">
+                    <strong>Step ${step.step}:</strong> ${step.title}<br>
+                    <small>${step.description}</small><br>
+                    <code>Opcodes: ${step.opcodes.join(", ")}</code>
+                </div>
+            `).join("")}
+        </div>
+    `;
+    
+    container.style.display = "block";
+}
+
+function exportDiff(format) {
+    const fromVersion = document.getElementById("from-version").value;
+    const toVersion = document.getElementById("to-version").value;
+    
+    if (fromVersion === toVersion) {
+        alert("Select different versions to export");
+        return;
+    }
+    
+    protocolDiffer.compareVersions(fromVersion, toVersion);
+    const report = protocolDiffer.exportDiffReport(format);
+    
+    let filename, mimeType;
+    if (format === "json") {
+        filename = `protocol-diff-${fromVersion}-to-${toVersion}.json`;
+        mimeType = "application/json";
+    } else if (format === "markdown") {
+        filename = `protocol-diff-${fromVersion}-to-${toVersion}.md`;
+        mimeType = "text/markdown";
+    }
+    
+    const blob = new Blob([report], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}

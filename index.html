@@ -16,6 +16,7 @@
             <button class="tab-button" onclick="switchTab('builder')">Builder</button>
             <button class="tab-button" onclick="switchTab('capture')">Live Capture</button>
             <button class="tab-button" onclick="switchTab('replay')">Replay</button>
+            <button class="tab-button" onclick="switchTab('differ')">Version Diff</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -182,6 +183,59 @@
             </div>
         </div>
 
+        <!-- Differ Tab -->
+        <div id="differ" class="tab-content">
+            <h2>Protocol Version Comparison</h2>
+            
+            <div class="differ-controls">
+                <div class="version-selectors">
+                    <div class="version-select">
+                        <label>From Version:</label>
+                        <select id="from-version" onchange="updateDiff()">
+                            <option value="317">RuneScape 317</option>
+                            <option value="474">RuneScape 474</option>
+                            <option value="508" selected>RuneScape 508</option>
+                        </select>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+                    
+                    <div class="version-select">
+                        <label>To Version:</label>
+                        <select id="to-version" onchange="updateDiff()">
+                            <option value="317">RuneScape 317</option>
+                            <option value="474" selected>RuneScape 474</option>
+                            <option value="508">RuneScape 508</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="diff-actions">
+                    <button onclick="generateMigrationGuide()">📋 Migration Guide</button>
+                    <button onclick="exportDiff('json')">💾 Export JSON</button>
+                    <button onclick="exportDiff('markdown')">📝 Export Markdown</button>
+                </div>
+            </div>
+            
+            <div class="diff-summary" id="diff-summary"></div>
+            
+            <div class="diff-filters">
+                <label>Show:</label>
+                <button class="filter-btn active" onclick="filterDiff('all')">All</button>
+                <button class="filter-btn" onclick="filterDiff('added')">Added</button>
+                <button class="filter-btn" onclick="filterDiff('removed')">Removed</button>
+                <button class="filter-btn" onclick="filterDiff('modified')">Modified</button>
+                <button class="filter-btn" onclick="filterDiff('unchanged')">Unchanged</button>
+            </div>
+            
+            <div class="diff-display" id="diff-display"></div>
+            
+            <div class="migration-guide" id="migration-guide" style="display: none;">
+                <h3>Migration Guide</h3>
+                <div id="migration-content"></div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -205,6 +259,7 @@
     
     <script src="modules/capture/packet-capture.js"></script>
     <script src="modules/replay/packet-replay.js"></script>
+    <script src="modules/differ/protocol-differ.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
