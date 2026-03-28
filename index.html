@@ -18,6 +18,7 @@
             <button class="tab-button" onclick="switchTab('replay')">Replay</button>
             <button class="tab-button" onclick="switchTab('differ')">Version Diff</button>
             <button class="tab-button" onclick="switchTab('encyclopedia')">Encyclopedia</button>
+            <button class="tab-button" onclick="switchTab('fuzzer')">Fuzzer</button>
             <button class="tab-button" onclick="switchTab('reference')">Reference</button>
         </div>
 
@@ -292,6 +293,72 @@
             </div>
         </div>
 
+        <!-- Fuzzer Tab -->
+        <div id="fuzzer" class="tab-content">
+            <h2>Protocol Fuzzer</h2>
+            
+            <div class="fuzzer-controls">
+                <div class="fuzzer-setup">
+                    <div class="setup-row">
+                        <label>Target Opcode:</label>
+                        <select id="fuzz-opcode" onchange="updateFuzzerFields()">
+                            <option value="">Select opcode...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setup-row">
+                        <label>Strategy:</label>
+                        <select id="fuzz-strategy">
+                            <option value="all">All Strategies</option>
+                            <option value="boundary">Boundary Values</option>
+                            <option value="random">Random Mutation</option>
+                            <option value="overflow">Buffer Overflow</option>
+                            <option value="underflow">Underflow/Truncation</option>
+                            <option value="format">Format Strings</option>
+                            <option value="injection">Injection Attacks</option>
+                            <option value="modifier">Modifier Edge Cases</option>
+                            <option value="type_confusion">Type Confusion</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setup-row">
+                        <button onclick="generateFuzzTests()" class="primary-btn">Generate Tests</button>
+                        <button onclick="loadRegressionTests()">Load Regression Tests</button>
+                    </div>
+                </div>
+                
+                <div class="fuzzer-stats">
+                    <span>Test Cases: <strong id="fuzz-case-count">0</strong></span>
+                    <span>Progress: <strong id="fuzz-progress">0/0</strong></span>
+                    <span>Vulnerabilities: <strong id="fuzz-vuln-count">0</strong></span>
+                </div>
+            </div>
+            
+            <div class="test-cases-section">
+                <h3>Generated Test Cases</h3>
+                <div class="test-controls">
+                    <button onclick="startFuzzing()" id="start-fuzz-btn">▶ Start Fuzzing</button>
+                    <button onclick="stopFuzzing()" id="stop-fuzz-btn" disabled>⏹ Stop</button>
+                    <button onclick="clearFuzzResults()">🗑 Clear</button>
+                    <button onclick="exportFuzzResults()">📥 Export Results</button>
+                </div>
+                
+                <div id="test-cases-list" class="test-cases-list"></div>
+            </div>
+            
+            <div class="fuzz-results-section">
+                <h3>Results</h3>
+                <div class="result-filters">
+                    <button class="result-filter active" onclick="filterFuzzResults('all')">All</button>
+                    <button class="result-filter" onclick="filterFuzzResults('success')">Success</button>
+                    <button class="result-filter" onclick="filterFuzzResults('error')">Errors</button>
+                    <button class="result-filter" onclick="filterFuzzResults('vulnerability')">Vulnerabilities</button>
+                </div>
+                
+                <div id="fuzz-results" class="fuzz-results"></div>
+            </div>
+        </div>
+
         <!-- Reference Tab -->
         <div id="reference" class="tab-content">
             <h2>Protocol Reference</h2>
@@ -318,6 +385,7 @@
     <script src="modules/differ/protocol-differ.js"></script>
     <script src="modules/encyclopedia/opcode-encyclopedia.js"></script>
     <script src="modules/visualizer/byte-visualizer.js"></script>
+    <script src="modules/fuzzer/protocol-fuzzer.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

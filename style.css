@@ -1328,3 +1328,246 @@ td:first-child {
     color: #a5d6ff;
     font-size: 14px;
 }
+
+/* Fuzzer Tab Styles */
+.fuzzer-controls {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+}
+
+.fuzzer-setup {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.setup-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.setup-row label {
+    min-width: 100px;
+    color: #8b949e;
+}
+
+.setup-row select {
+    padding: 8px 12px;
+    background: #0d1117;
+    color: #f0f6fc;
+    border: 1px solid #30363d;
+    min-width: 200px;
+}
+
+.primary-btn {
+    padding: 8px 16px;
+    background: #238636;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.primary-btn:hover {
+    background: #2ea043;
+}
+
+.fuzzer-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 15px;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+}
+
+.test-cases-section,
+.fuzz-results-section {
+    margin-top: 30px;
+}
+
+.test-controls {
+    display: flex;
+    gap: 10px;
+    margin: 15px 0;
+}
+
+.test-cases-list {
+    max-height: 300px;
+    overflow-y: auto;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.test-case-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+}
+
+.test-case-header {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.test-index {
+    color: #8b949e;
+}
+
+.test-name {
+    color: #58a6ff;
+}
+
+.test-strategy {
+    color: #a371f7;
+    font-size: 12px;
+    padding: 2px 8px;
+    background: #1f1639;
+    border-radius: 12px;
+}
+
+.test-case-body {
+    font-size: 13px;
+    color: #8b949e;
+}
+
+.test-description {
+    margin: 5px 0;
+}
+
+.test-packet code {
+    color: #79c0ff;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.result-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.result-filter {
+    padding: 6px 12px;
+    background: #21262d;
+    color: #c9d1d9;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.result-filter.active {
+    background: #1f6feb;
+    color: white;
+}
+
+.fuzz-results {
+    max-height: 400px;
+    overflow-y: auto;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 6px;
+    padding: 10px;
+}
+
+.fuzz-result-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 4px;
+}
+
+.fuzz-result-item.success {
+    border-left: 3px solid #3fb950;
+}
+
+.fuzz-result-item.error {
+    border-left: 3px solid #f85149;
+}
+
+.fuzz-result-item.vulnerability {
+    border-left: 3px solid #f39c12;
+    background: #271c00;
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.result-test {
+    font-weight: bold;
+    color: #58a6ff;
+}
+
+.result-status {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+}
+
+.result-status.success {
+    background: #0f2d0f;
+    color: #3fb950;
+}
+
+.result-status.error {
+    background: #2d0f0f;
+    color: #f85149;
+}
+
+.result-status.vulnerability {
+    background: #2d1f0f;
+    color: #f39c12;
+}
+
+.result-body {
+    font-size: 13px;
+}
+
+.error-msg {
+    color: #f85149;
+    margin-top: 5px;
+}
+
+.vuln-info {
+    margin-top: 10px;
+    padding: 10px;
+    background: #2d1f0f;
+    border: 1px solid #f39c12;
+    border-radius: 4px;
+}
+
+.vuln-info strong {
+    color: #f39c12;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.vuln-type,
+.vuln-severity {
+    display: inline-block;
+    padding: 2px 8px;
+    margin-right: 8px;
+    background: #1a0f00;
+    color: #ffa657;
+    border-radius: 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+}

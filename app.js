@@ -1344,3 +1344,231 @@ window.decodePacket = function() {
     // Show visualize button
     document.getElementById("visualize-btn").style.display = "inline-block";
 };
+
+// Protocol Fuzzer Functions
+let protocolFuzzer = null;
+let currentFuzzFilter = "all";
+
+// Initialize fuzzer on load
+document.addEventListener("DOMContentLoaded", function() {
+    if (window.ProtocolFuzzer) {
+        protocolFuzzer = new ProtocolFuzzer();
+        populateFuzzerOpcodes();
+    }
+});
+
+function populateFuzzerOpcodes() {
+    const select = document.getElementById("fuzz-opcode");
+    if (!select) return;
+    
+    Object.entries(PACKET_DEFINITIONS).forEach(([opcode, def]) => {
+        const option = document.createElement("option");
+        option.value = opcode;
+        option.textContent = `${opcode} - ${def.name}`;
+        select.appendChild(option);
+    });
+}
+
+function updateFuzzerFields() {
+    const opcode = document.getElementById("fuzz-opcode").value;
+    if (!opcode) return;
+    
+    const definition = PACKET_DEFINITIONS[opcode];
+    // Could show field information here if needed
+}
+
+function generateFuzzTests() {
+    const opcode = document.getElementById("fuzz-opcode").value;
+    const strategy = document.getElementById("fuzz-strategy").value;
+    
+    if (!opcode) {
+        alert("Please select an opcode to fuzz");
+        return;
+    }
+    
+    const definition = PACKET_DEFINITIONS[opcode];
+    protocolFuzzer.generateFuzzCases(definition, strategy);
+    
+    displayTestCases();
+    updateFuzzStats();
+}
+
+function loadRegressionTests() {
+    const regressionTests = protocolFuzzer.generateRegressionTests();
+    protocolFuzzer.testCases = regressionTests;
+    
+    displayTestCases();
+    updateFuzzStats();
+}
+
+function displayTestCases() {
+    const container = document.getElementById("test-cases-list");
+    container.innerHTML = "";
+    
+    protocolFuzzer.testCases.forEach((testCase, index) => {
+        const div = document.createElement("div");
+        div.className = "test-case-item";
+        
+        const hex = testCase.packet.map(b => b.toString(16).padStart(2, "0")).join(" ");
+        
+        div.innerHTML = `
+            <div class="test-case-header">
+                <span class="test-index">#${index + 1}</span>
+                <span class="test-name">${testCase.name}</span>
+                <span class="test-strategy">${testCase.strategy}</span>
+            </div>
+            <div class="test-case-body">
+                <div class="test-description">${testCase.description}</div>
+                <div class="test-packet">Packet: <code>${hex}</code></div>
+                <div class="test-size">Size: ${testCase.packet.length} bytes</div>
+            </div>
+        `;
+        
+        container.appendChild(div);
+    });
+}
+
+function updateFuzzStats() {
+    document.getElementById("fuzz-case-count").textContent = protocolFuzzer.testCases.length;
+    document.getElementById("fuzz-progress").textContent = 
+        `${protocolFuzzer.currentTest}/${protocolFuzzer.testCases.length}`;
+}
+
+function startFuzzing() {
+    if (protocolFuzzer.testCases.length === 0) {
+        alert("No test cases generated");
+        return;
+    }
+    
+    document.getElementById("start-fuzz-btn").disabled = true;
+    document.getElementById("stop-fuzz-btn").disabled = false;
+    
+    protocolFuzzer.runTests(
+        (current, total, result) => {
+            // Progress callback
+            updateFuzzProgress(current, total, result);
+        },
+        (results) => {
+            // Complete callback
+            onFuzzingComplete(results);
+        }
+    );
+}
+
+function stopFuzzing() {
+    protocolFuzzer.stopTests();
+    document.getElementById("start-fuzz-btn").disabled = false;
+    document.getElementById("stop-fuzz-btn").disabled = true;
+}
+
+function updateFuzzProgress(current, total, result) {
+    document.getElementById("fuzz-progress").textContent = `${current}/${total}`;
+    
+    // Add result to display
+    addFuzzResult(result);
+    
+    // Update vulnerability count
+    const vulnCount = protocolFuzzer.results.filter(r => r.vulnerability).length;
+    document.getElementById("fuzz-vuln-count").textContent = vulnCount;
+}
+
+function addFuzzResult(result) {
+    const container = document.getElementById("fuzz-results");
+    const div = document.createElement("div");
+    
+    let statusClass = "success";
+    if (result.error) statusClass = "error";
+    if (result.vulnerability) statusClass = "vulnerability";
+    
+    div.className = `fuzz-result-item ${statusClass}`;
+    div.dataset.status = statusClass;
+    
+    const hex = result.testCase.packet.map(b => b.toString(16).padStart(2, "0")).join(" ");
+    
+    div.innerHTML = `
+        <div class="result-header">
+            <span class="result-test">${result.testCase.name}</span>
+            <span class="result-status ${statusClass}">${statusClass.toUpperCase()}</span>
+        </div>
+        <div class="result-body">
+            <div>Packet: <code>${hex}</code></div>
+            ${result.error ? `<div class="error-msg">Error: ${result.error}</div>` : ""}
+            ${result.vulnerability ? `
+                <div class="vuln-info">
+                    <strong>Vulnerability Found!</strong>
+                    <span class="vuln-type">${result.vulnerability.type}</span>
+                    <span class="vuln-severity">${result.vulnerability.severity}</span>
+                    <p>${result.vulnerability.description}</p>
+                </div>
+            ` : ""}
+        </div>
+    `;
+    
+    container.insertBefore(div, container.firstChild);
+    
+    // Apply filter
+    if (currentFuzzFilter !== "all" && statusClass !== currentFuzzFilter) {
+        div.style.display = "none";
+    }
+}
+
+function onFuzzingComplete(results) {
+    document.getElementById("start-fuzz-btn").disabled = false;
+    document.getElementById("stop-fuzz-btn").disabled = true;
+    
+    // Summary
+    const vulnerabilities = results.filter(r => r.vulnerability);
+    const errors = results.filter(r => r.error && !r.vulnerability);
+    
+    if (vulnerabilities.length > 0) {
+        alert(`Fuzzing complete! Found ${vulnerabilities.length} potential vulnerabilities.`);
+    } else {
+        alert(`Fuzzing complete. No vulnerabilities found in ${results.length} tests.`);
+    }
+}
+
+function clearFuzzResults() {
+    document.getElementById("fuzz-results").innerHTML = "";
+    document.getElementById("fuzz-vuln-count").textContent = "0";
+    protocolFuzzer.results = [];
+}
+
+function filterFuzzResults(filter) {
+    currentFuzzFilter = filter;
+    
+    // Update button states
+    document.querySelectorAll(".result-filter").forEach(btn => {
+        btn.classList.remove("active");
+    });
+    event.target.classList.add("active");
+    
+    // Filter results
+    const items = document.querySelectorAll(".fuzz-result-item");
+    items.forEach(item => {
+        if (filter === "all" || item.dataset.status === filter) {
+            item.style.display = "block";
+        } else {
+            item.style.display = "none";
+        }
+    });
+}
+
+function exportFuzzResults() {
+    if (protocolFuzzer.results.length === 0) {
+        alert("No results to export");
+        return;
+    }
+    
+    const format = confirm("Export as CSV? (Cancel for JSON)") ? "csv" : "json";
+    const data = protocolFuzzer.exportResults(format);
+    const extension = format === "csv" ? "csv" : "json";
+    const mimeType = format === "csv" ? "text/csv" : "application/json";
+    
+    const blob = new Blob([data], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `fuzz-results-${Date.now()}.${extension}`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
